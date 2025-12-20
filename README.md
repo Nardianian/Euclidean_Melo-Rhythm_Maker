@@ -26,7 +26,9 @@ E) Finally, the rhythm thus created, including any arpeggio, is output from a MI
     has a different note length).
 
  The layout includes a first row with labels indicating the function of the elements below, arranged from left to right:
+ 
 Active | Note | Steps | Pulses | Swing | Micro | Velocity | Note Len | Arp On | ARP Notes | Mode | ARP Rate | MIDI Port | MIDI Ch |
+
 Below the row of labels are the 6 rows with the controls for each rhythm, the arpeggiator, and the MIDI output.
 The controls on each row are, in order from left to right: a rhythm activation checkbox labeled R1 to R6 (Rhythm 1, Rhythm 2, etc.), then the 7 rotary knobs for Note, Steps, Pulses, Swing, Microtiming, Velocity Accent, and Note Length, with boxes below each rotary encoder displaying the numerical value corresponding to the position of the encoder above it. Then there's the checkbox to enable ARP, then the tickable popup menu with snapshot/mask for selecting the 7 notes/octaves to arpeggiate, then the combo box/menu for choosing the Mode, and the one for choosing the Rate.
 In the right corner of the window is the "Clock Settings" button/popup menu for choosing the clock, with different options for plugins (DAW, INTERNAL, EXTERNAL) and standalone (Internal, External).
