@@ -4,65 +4,61 @@
     MidiGenerator.h
     Created: 9 Oct 2022 9:09:12pm
     Author:  Andreas Sandersen
-
+    Modified: 14 Dec. 2025 16:29:00pm by Nard.
   ==============================================================================
 */
-
 #pragma once
-
 #include <JuceHeader.h>
-#include "../utils/euclidean.h"
+#include "Euclidean.h"
+#include "Arp.h"
 
-//==============================================================================
-/**
-*/
 class MidiGenerator
 {
 public:
-    MidiGenerator();
-    ~MidiGenerator() override;
-
-    void prepareToPlay (double sampleRate, int samplesPerBlock) override;
-    void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
-
-    struct Rhythm
+    MidiGenerator()
     {
-        Rhythm(AudioParameterBool* isActive, AudioParameterInt* noteNumber, AudioParameterInt* stepsNumber, AudioParameterInt* pulseNumber, AudioParameterBool* sphereOn);
+        rhythmPatterns.resize(6);
+        rhythmArps.resize(6);
+        arpNotes.resize(6);
+    }
 
-        void reset();
+    std::vector<EuclideanPattern> rhythmPatterns;
+    std::vector<Arp> rhythmArps;
+    std::vector<std::vector<int>> arpNotes;
 
-        AudioParameterBool* activated;
-        AudioParameterInt* note;
-        AudioParameterInt* steps;
-        AudioParameterInt* pulses;
-        AudioParameterBool* sphere;
+    bool triggerStep(int rhythmIndex, int& outMidiNote)
+    {
+        if (rhythmIndex < 0 || rhythmIndex >= rhythmPatterns.size())
+            return false;
 
-        int cachedMidiNote;
+        auto& pattern = rhythmPatterns[rhythmIndex];
 
-    };
+        // Avanza il pattern euclideo (1 step)
+        if (!pattern.nextStep())
+            return false;
 
-    OwnedArray<Rhythm> rhythms;
+        auto& arp = rhythmArps[rhythmIndex];
+        auto& notes = arpNotes[rhythmIndex];
 
-private:
-    
-    AudioProcessorValueTreeState valueTree;
+        if (notes.empty())
+        {
+            outMidiNote = 60;
+            return true;
+        }
 
-    double fs;
-    int time;
-    int stepIndex;
+        int noteIndex = arp.getCurrentStep();
+        noteIndex %= notes.size();
+        outMidiNote = notes[noteIndex];
 
-    bool noteIsOn;
-    
-    int timerPeriodMs;
+        return true;
+    }
 
-    void timerCallback() override;
-    
-    AudioProcessorValueTreeState::ParameterLayout createParameterLayout(int rhythmCount) const;
+    bool advanceArp(int rhythmIndex, double samplesPerStep, double samplesPerArpStep)
+    {
+        if (rhythmIndex < 0 || rhythmIndex >= rhythmArps.size())
+            return false;
 
-    static int getRhythmCount();
-
-    AudioPlayHead::CurrentPositionInfo posInfo;
-
-    //==============================================================================
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Euclidean_seqAudioProcessor)
+        return rhythmArps[rhythmIndex].advance(samplesPerStep, samplesPerArpStep);
+    }
 };
+#pragma once
