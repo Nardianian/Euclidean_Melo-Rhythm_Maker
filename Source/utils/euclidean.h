@@ -1,12 +1,4 @@
 /*
-  ==============================================================================
-
-    euclidean.h
-    Created: 9 Oct 2022 9:05:42pm
-    Author:  Andreas Sandersen
-    Modified: 13 Dec 2025 0.10:00 am by Nard.
-  ==============================================================================
-*/
 #pragma once
 #include <vector>
 #include <cmath>
@@ -61,4 +53,5 @@ private:
     }
 };
 #pragma once
+
 
