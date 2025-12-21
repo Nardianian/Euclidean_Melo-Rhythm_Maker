@@ -1,11 +1,5 @@
 /*
-  ==============================================================================
-
-    This file contains the basic framework code for a JUCE plugin processor.
-
-  ==============================================================================
-*/
-#include "PluginProcessor.h"
+ #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
 //==============================================================================
@@ -74,13 +68,18 @@ Euclidean_seqAudioProcessor::createParameterLayout()
             "rhythm" + String(i) + "_arpMode", "ARP Mode",
             StringArray({ "UP", "DOWN", "UP_DOWN", "RANDOM" }), 0));
 
-        layout.add(std::make_unique<AudioParameterFloat>(
-            "rhythm" + String(i) + "_arpRate", "ARP Rate",
-            NormalisableRange<float>(0.1f, 4.0f), 1.0f));
+        layout.add(std::make_unique<AudioParameterChoice>(
+            "rhythm" + String(i) + "_arpRate",
+            "ARP Rate",
+            StringArray{ "1/1", "1/2", "1/4", "1/8", "1/16", "1/32", "1/8T", "1/16D" },
+            2)); // default = 1/4
 
-        layout.add(std::make_unique<AudioParameterFloat>(
-            "rhythm" + String(i) + "_arpNotes", "ARP Notes",
-            NormalisableRange<float>(1.0f, 16.0f), 4.0f));
+        layout.add(std::make_unique<AudioParameterInt>(
+            "rhythm" + String(i) + "_arpNotesMask",
+            "ARP Notes Mask",
+            0,
+            127,
+            0b0001111)); // default: prime 4 note attive
 
         // MIDI Port
         layout.add(std::make_unique<juce::AudioParameterChoice>(
@@ -163,6 +162,14 @@ void Euclidean_seqAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     }
 
     buffer.clear();
+    // ===== UPDATE ARP ENABLE FLAGS (once per block) =====
+    for (int r = 0; r < 6; ++r)
+    {
+        bool arpOn = parameters.getRawParameterValue(
+            "rhythm" + juce::String(r) + "_arpActive")->load() > 0.5f;
+
+        midiGen.arpEnabled[r].store(arpOn);
+    }
 
     const int numSamples = buffer.getNumSamples();
 
@@ -214,12 +221,6 @@ void Euclidean_seqAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         auto* arpMode = parameters.getRawParameterValue(
             "rhythm" + juce::String(i) + "_arpMode");
 
-        auto* arpRate = parameters.getRawParameterValue(
-            "rhythm" + juce::String(i) + "_arpRate");
-
-        auto* arpNotes = parameters.getRawParameterValue(
-            "rhythm" + juce::String(i) + "_arpNotes");
-
         auto* steps = parameters.getRawParameterValue(
             "rhythm" + juce::String(i) + "_steps");
 
@@ -238,16 +239,45 @@ void Euclidean_seqAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
             stepMicrotiming[i].resize(numSteps, 0.0);
         }
 
-
         if (arpActive->load() > 0.5f)
         {
             midiGen.rhythmArps[i].setType(
                 static_cast<ArpType>((int)arpMode->load()));
 
-            midiGen.rhythmArps[i].setRate(arpRate->load());
+            auto* arpRateParam = parameters.getRawParameterValue(
+                "rhythm" + juce::String(i) + "_arpRate");
+            // Mapping musicale → moltiplicatore
+           static const double arpRateTable[] =
+           {
+            1.0,    // 1/1
+            0.5,    // 1/2
+            0.25,   // 1/4
+            0.125,  // 1/8
+            0.0625, // 1/16
+            0.03125,// 1/32
+            0.1666667, // 1/8T
+            0.375      // 1/16D
+           };
+           int rateIndex = juce::jlimit(0, 7, (int)arpRateParam->load());
+           midiGen.rhythmArps[i].setRate(arpRateTable[rateIndex]);
 
-            midiGen.arpNotes[i].resize(
-                (int)arpNotes->load(), 60);
+           auto* arpNotesMask = parameters.getRawParameterValue(
+               "rhythm" + juce::String(i) + "_arpNotesMask");
+           
+           midiGen.arpNotes[i].clear();
+           
+           int mask = (int)arpNotesMask->load();
+           for (int n = 0; n < 7; ++n)
+           {
+               if (mask & (1 << n))
+                   midiGen.arpNotes[i].push_back(60 + n); // C, C#, D...
+           }
+        }
+        else
+        {
+            // ===== ARP DISABLED → RESET =====
+            midiGen.rhythmArps[i].reset();
+            midiGen.arpNotes[i].clear();
         }
     }
 // ================= SAMPLE-ACCURATE PROCESSING =================
@@ -255,7 +285,34 @@ void Euclidean_seqAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     {
         for (int r = 0; r < 6; ++r)
         {
+            // ===== ACTIVE (Rhythm Enable / Disable) =====
+            if (auto* activeParam = parameters.getRawParameterValue(
+                "rhythm" + juce::String(r) + "_active"))
+            {
+                if (activeParam->load() < 0.5f)
+                    continue; // rhythm disattivo: non generare nulla
+            }
+
             bool stepTriggered = false;
+
+            // ===== ARP SAMPLE-ACCURATE ADVANCE =====
+            if (parameters.getRawParameterValue(
+                "rhythm" + juce::String(r) + "_arpActive")->load() > 0.5f)
+            {
+                auto* arpRateParam = parameters.getRawParameterValue(
+                    "rhythm" + juce::String(r) + "_arpRate");
+
+                static const double arpRateTable[] =
+                {
+                    1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0.1666667, 0.375
+                };
+
+                int rateIndex = juce::jlimit(0, 7, (int)arpRateParam->load());
+                double arpRate = arpRateTable[rateIndex];
+
+                double samplesPerArpStep = samplesPerStep * arpRate;
+                midiGen.rhythmArps[r].advanceSamples(1.0, samplesPerArpStep);
+            }
 
             // ===== EXTERNAL MIDI CLOCK =====
             if (clockSource == ClockSource::External)
@@ -287,7 +344,10 @@ void Euclidean_seqAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
             int outMidiNote = 0;
 
             // ===== TRIGGER EUCLIDEAN / ARP / NOTE ON =====
-            if (midiGen.triggerStep(r, outMidiNote))
+            int baseNote = (int)parameters.getRawParameterValue(
+                "rhythm" + juce::String(r) + "_note")->load();
+
+            if (midiGen.triggerStep(r, baseNote, outMidiNote))
             {
                 int midiPortIndex = 0;
                 if (auto* portParam = parameters.getRawParameterValue(
@@ -295,9 +355,26 @@ void Euclidean_seqAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
                 {
                     midiPortIndex = (int)portParam->load(); // 0..N
                 }
+                // ===== MIDI PORT TAG (SysEx) =====
 
+                juce::MidiMessage portTag =
+                    juce::MidiMessage::createSysExMessage(
+                        { 0x7D, (juce::uint8)midiPortIndex });
+
+                stagedMidiEvents.push_back({
+                    midiPortIndex,
+                    portTag,
+                    sample
+                    });
+
+                int velocity = 100;
+                if (auto* velParam = parameters.getRawParameterValue(
+                    "rhythm" + juce::String(r) + "_velocityAccent"))
+                {
+                    velocity = juce::jlimit(1, 127, (int)velParam->load());
+                }
                 juce::MidiMessage noteOn =
-                    juce::MidiMessage::noteOn(midiChannel, outMidiNote, (juce::uint8)100);
+                    juce::MidiMessage::noteOn(midiChannel, outMidiNote, (juce::uint8)velocity);
 
                 stagedMidiEvents.push_back({
                     midiPortIndex,
@@ -416,4 +493,6 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new Euclidean_seqAudioProcessor();
 }
+
+
 
