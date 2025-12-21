@@ -355,17 +355,24 @@ void Euclidean_seqAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
                 {
                     midiPortIndex = (int)portParam->load(); // 0..N
                 }
-                // ===== MIDI PORT TAG (SysEx) =====
-
-                juce::MidiMessage portTag =
-                    juce::MidiMessage::createSysExMessage(
-                        { 0x7D, (juce::uint8)midiPortIndex });
-
-                stagedMidiEvents.push_back({
-                    midiPortIndex,
-                    portTag,
-                    sample
-                    });
+             // ===== MIDI PORT TAG (SysEx) =====
+             // JUCE 8 richiede puntatore + dimensione (NO initializer_list)
+             const juce::uint8 sysExData[2] =
+             {
+             0x7D, // Manufacturer ID (non commerciale)
+             static_cast<juce::uint8>(midiPortIndex)
+            };
+             
+             juce::MidiMessage portTag =
+             juce::MidiMessage::createSysExMessage(
+             sysExData,
+             2);
+             
+             stagedMidiEvents.push_back({
+              midiPortIndex,
+              portTag,
+              sample
+              });
 
                 int velocity = 100;
                 if (auto* velParam = parameters.getRawParameterValue(
@@ -493,6 +500,7 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new Euclidean_seqAudioProcessor();
 }
+
 
 
 
