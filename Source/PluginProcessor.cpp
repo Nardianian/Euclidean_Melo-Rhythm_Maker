@@ -79,7 +79,7 @@ Euclidean_seqAudioProcessor::createParameterLayout()
             "ARP Notes Mask",
             0,
             127,
-            0b0001111)); // default: prime 4 note attive
+            0b0001111)); // default: first 4 active notes
 
         // MIDI Port
         layout.add(std::make_unique<juce::AudioParameterChoice>(
@@ -458,11 +458,11 @@ void Euclidean_seqAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 
         globalSampleCounter++;
     }
-    // ===== FLUSH MIDI EVENTS (multi-port logical routing) ===== //cfr se mettere prima di graffa blu superiore [da for a clear()]
+    // ===== FLUSH MIDI EVENTS (multi-port logical routing) [or move this] ===== //
     for (const auto& e : stagedMidiEvents)
     {
-        // Attualmente: tutte le porte finiscono nello stesso MidiBuffer
-        // Il portIndex può essere usato da host / script / future routing
+        // Currently: All ports end up in the same MidiBuffer
+        // The portIndex can be used by host / script / future routing
         midiMessages.addEvent(e.message, e.sampleOffset);
     }
 
@@ -493,6 +493,7 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new Euclidean_seqAudioProcessor();
 }
+
 
 
 
