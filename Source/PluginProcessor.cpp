@@ -108,16 +108,16 @@ Euclidean_seqAudioProcessor::createParameterLayout()
 void Euclidean_seqAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
     currentSampleRate = sampleRate;
-    globalSampleCounter = 0;  // reset contatore globale dei sample
+    globalSampleCounter = 0;  // reset global sample counter
     for (int r = 0; r < 6; ++r)
     {
         nextStepSamplePerRhythm[r] = 0;  // reset clock per rhythm
         stepCounterPerRhythm[r] = 0;     // reset step counter
-        stepMicrotiming[r].clear();      // microtiming inizializzato vuoto
+        stepMicrotiming[r].clear();      // microtiming initialized empty
     }
 
-    midiClockCounter = 0;                // reset contatore clock esterno
-    externalClockRunning = false;        // reset stato clock esterno
+    midiClockCounter = 0;                // reset external clock counter
+    externalClockRunning = false;        // reset external clock state
 }
 
 void Euclidean_seqAudioProcessor::releaseResources()
@@ -493,6 +493,7 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new Euclidean_seqAudioProcessor();
 }
+
 
 
 
