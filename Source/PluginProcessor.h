@@ -72,7 +72,7 @@ private:
     std::array<int64_t, 6> stepCounterPerRhythm{};
     // ===== MICROTIMING PER STEP INDEX =====
     std::array<std::vector<double>, 6> stepMicrotiming;
-    // ===== NOTE-OFF BUFFER CROSSING (BASSO) =====
+    // ===== NOTE-OFF BUFFER CROSSING (BASS Rhythm 6) =====
     struct PendingNoteOff
     {
         int channel = 1;
@@ -93,3 +93,4 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Euclidean_seqAudioProcessor)
 };
 #pragma once
+
