@@ -1,5 +1,6 @@
-I'm on Windows 11 Home and using now Juce 8.0.12 (starting with 8.0.10 and after 8.0.11) and Visual Studio 2026 Insiders. I'm working on a Juce project for plugins and standalone for Windows x64.
-The project involves programming a MIDI generator for 6 independent Euclidean rhythms with the following features:
+Work in Progress, at this moment not finished, doesn't work, doesn't compile (read the latest build errors below).
+
+Work on Windows 11 Home using Juce 8.0.12 (starting with 8.0.10 and after 8.0.11) and Visual Studio 2026 Insiders (starting with Visual Studio Community Edition 2022 v17), project for plugins and standalone for Windows x64. The project involves programming a MIDI generator for 6 independent Euclidean rhythms with the following features:
 
 A) Generation of 6 independent rhythms, in the form of 6 separate MIDI streams but linked to a global clock.
 
@@ -52,7 +53,7 @@ Below the row of labels are the 6 rows with the controls for each rhythm, the ar
 The controls on each row are, in order from left to right: a rhythm activation checkbox labeled R1 to R6 (Rhythm 1, Rhythm 2, etc.), then the 7 rotary knobs for Note, Steps, Pulses, Swing, Microtiming, Velocity Accent, and Note Length, with boxes below each rotary encoder displaying the numerical value corresponding to the position of the encoder above it. Then there's the checkbox to enable ARP, then the tickable popup menu with snapshot/mask for selecting the 7 notes/octaves to arpeggiate, then the combo box/menu for choosing the Mode, and the one for choosing the Rate.
 In the right corner of the window is the "Clock Settings" button/popup menu for choosing the clock, with different options for plugins (DAW, INTERNAL, EXTERNAL) and standalone (Internal, External).
 
-Latest src (not uploaded on this repo) not compiles with these errors: 
+Thus latest src not compiles with these errors: 
 
 Error C2672 'juce::detail::toAddress': No matching overloaded functions found euclidean_seq_SharedCode C:\Program Files\JUCE\modules\juce_core\containers\juce_Span.h 93
 
@@ -67,7 +68,7 @@ Error C2440 'initialization': unable to convert from 'void' to 'Value *'
             Value=const std::byte
         ] euclidean_seq_SharedCode C:\Program Files\JUCE\modules\juce_core\containers\juce_Span.h 119
         
-thanks to Andreas Sandersen
+thanks to Andreas Sandersen 
 https://sanandreas.no/software
 https://github.com/sandy999999/rhythm-generator
 early code copyright: ©SanAndreas 2025
