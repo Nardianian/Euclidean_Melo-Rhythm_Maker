@@ -1,10 +1,4 @@
 /*
-  ==============================================================================
-
-    This file contains the basic framework code for a JUCE plugin editor.
-
-  ==============================================================================
-*/
 #pragma once
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
@@ -72,12 +66,14 @@ private:
         juce::Slider microKnob;
         juce::Slider velocityKnob;
         juce::Slider noteLenKnob;
+        juce::Label rowLabel;
+
 
         // ARP Controls
         juce::ToggleButton arpActive;
         juce::ComboBox arpMode;
-        juce::Slider arpRateKnob;
-        juce::Slider arpNotesKnob;
+        juce::ComboBox arpRateBox;
+        juce::TextButton arpNotesButton;
 
         // MIDI output
         juce::Label midiPortLabel;
@@ -108,8 +104,7 @@ private:
 
         std::unique_ptr<ButtonAttachment> arpActive;
         std::unique_ptr<ComboBoxAttachment> arpMode;
-        std::unique_ptr<SliderAttachment> arpRate;
-        std::unique_ptr<SliderAttachment> arpNotes;
+        std::unique_ptr<ComboBoxAttachment> arpRate;
     };
 
     RhythmRowAttachments rhythmAttachments[6];
@@ -125,4 +120,7 @@ private:
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Euclidean_seqAudioProcessorEditor)
 };
+
+
+
 
