@@ -1,4 +1,3 @@
-/*
 #pragma once
 #include <JuceHeader.h>
 
@@ -198,7 +197,9 @@ public:
 private:
     JUCE_LEAK_DETECTOR(Arp)
 };
-#pragma once
+
+
+
 
 
 
