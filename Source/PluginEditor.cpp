@@ -131,7 +131,7 @@ Euclidean_seqAudioProcessorEditor::Euclidean_seqAudioProcessorEditor(Euclidean_s
         row.rowLabel.setJustificationType(juce::Justification::centredLeft);
         addAndMakeVisible(row.rowLabel);
 
-        // ===== NOTE SOURCE BUTTON (Single / Scale / Chord) =====
+        // ===== NOTE SOURCE BUTTON (Single Note / Scale / Chord) =====
         row.noteSourceButton.onClick = [this, i]()
             {
                 juce::PopupMenu menu;
@@ -186,10 +186,10 @@ Euclidean_seqAudioProcessorEditor::Euclidean_seqAudioProcessorEditor(Euclidean_s
                         else
                             button.setButtonText("Chord");
 
-                        // ===== AGGIORNAMENTO PARAMETRO =====
+                        // ===== PARAMETER UPDATE =====
                         if (auto* param = audioProcessor.parameters.getParameter("rhythm" + juce::String(i) + "_note"))
                         {
-                            // Normalizza valore fra 0.0f e 1.0f se necessario, oppure usa direttamente l'ID
+                            // Normalize value between 0.0f and 1.0f if needed, or use the ID directly
                             param->setValueNotifyingHost((float)result);
                         }
                     });
@@ -226,7 +226,7 @@ Euclidean_seqAudioProcessorEditor::Euclidean_seqAudioProcessorEditor(Euclidean_s
             {
                 juce::PopupMenu menu;
 
-                // Note realmente ricevute dal ritmo
+                // Notes actually received from the rhythm
                 auto inputNotes = audioProcessor.midiGen.getArpInputNotes(i);
                 auto& slots = audioProcessor.midiGen.arpNoteSlots[i];
 
@@ -337,15 +337,15 @@ Euclidean_seqAudioProcessorEditor::Euclidean_seqAudioProcessorEditor(Euclidean_s
         att.active = std::make_unique<ButtonAttachment>(
             params, "rhythm" + juce::String(i) + "_active", row.activeButton);
 
-        // Colore bottone normale
+        // Normal button color
         row.muteButton.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
         row.soloButton.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
 
-        // Colore bottone quando premuto
+        // Button color when pressed
         row.muteButton.setColour(juce::TextButton::buttonOnColourId, juce::Colours::darkred);
         row.soloButton.setColour(juce::TextButton::buttonOnColourId, juce::Colours::darkgreen);
 
-        // Colore testo
+        // Text Colour
         row.muteButton.setColour(juce::TextButton::textColourOffId, juce::Colours::white);
         row.soloButton.setColour(juce::TextButton::textColourOffId, juce::Colours::white);
         row.muteButton.setColour(juce::TextButton::textColourOnId, juce::Colours::white);
@@ -422,7 +422,7 @@ Euclidean_seqAudioProcessorEditor::Euclidean_seqAudioProcessorEditor(Euclidean_s
             }
             else
             {
-                // fallback: ripristina selezione se ancora valida
+                // fallback: reset selection if still valid
                 int deviceIndex = currentId - 1;
                 if (deviceIndex >= 0 && deviceIndex < midiDevices.size())
                     box.setSelectedId(deviceIndex + 1, juce::dontSendNotification);
@@ -459,7 +459,7 @@ void Euclidean_seqAudioProcessorEditor::updateArpGui()
             DBG(" " << note);
     }
 
-    // Ridisegna editor
+    // Redesign editor
     repaint();
 }
 
@@ -482,7 +482,7 @@ void Euclidean_seqAudioProcessorEditor::openClockSettingsPopup()
 
     dialog->setSize(220, 100);
 
-    // Ancora il popup SOPRA il bottone ClockSettings
+    // Still the popup ABOVE the ClockSettings button
     clockPopup.reset(new juce::CallOutBox(
         *dialog,
         clockSettingsButton.getScreenBounds(),
@@ -497,8 +497,8 @@ void Euclidean_seqAudioProcessorEditor::resized()
     auto area = getLocalBounds().reduced(10);
 
     const int headerHeight = 40;
-    const int rowHeight = 90;   // Altezza della riga per la prima riga
-    const int rowHeightWithSpacing = 110;   // Aggiungiamo un margine (con altezza extra) per le righe 2-6
+    const int rowHeight = 90;   // Row height for the first row
+    const int rowHeightWithSpacing = 110;   // Let's add a margin (with extra height) for lines 2-6
     const int knobSize = 100;
     const int valueHeight = 15;
 
@@ -544,9 +544,9 @@ void Euclidean_seqAudioProcessorEditor::resized()
     const int bottomMargin = 50;
     const int buttonHeight = 30;
     const int playButtonWidth = 90;
-    const int playClockSpacing = 10; // spazio tra PLAY e Clock Settings
+    const int playClockSpacing = 10; // space between PLAY and Clock Settings
 
-    // Clock (destra)
+    // Clock (right)
     clockSettingsButton.setBounds(
         getWidth() - 180,
         getHeight() - bottomMargin,
@@ -559,15 +559,15 @@ void Euclidean_seqAudioProcessorEditor::resized()
         170,
         buttonHeight);
 
-    // PLAY (in basso al centro)
+    // PLAY (bottom center)
     playButton.setBounds(
-        (getWidth() - playButtonWidth) / 2,  // Posizionamento centrato orizzontalmente
-        getHeight() - bottomMargin,          // Allineato in basso
+        (getWidth() - playButtonWidth) / 2,  // Horizontally centered positioning
+        getHeight() - bottomMargin,          // Aligned at the bottom
         playButtonWidth,
         buttonHeight);
 
     // ================= RHYTHM ROWS =================
-    // 5 mm reali per OGNI riga (DPI aware)
+    // 5 mm real for EACH row (DPI aware)
     const float mmToPx = 96.0f / 25.4f;
     const int rowGapPx = juce::roundToInt(5.0f * mmToPx * getDesktopScaleFactor());
 
@@ -577,17 +577,17 @@ void Euclidean_seqAudioProcessorEditor::resized()
 
         int y = headerHeight + r * rowHeight;
 
-        // Sposta SOLO da R2 in poi
+        // Move ONLY from R2 onwards
         if (r >= 1)
             y += r * rowGapPx;
 
         // Row label R1–R6
         row.rowLabel.setBounds(columnX[COL_ACTIVE] - 30, y + 6, 25, 20);
 
-        // Row Active Button (mantieni solo il primo)
+        // Row Active Button (keep only the first one)
         row.activeButton.setBounds(columnX[COL_ACTIVE] - 2, y, 26, 26);  // (Box attivazione 1)
 
-        // M / S / R sotto ACTIVE (sotto R1–R6)
+        // M / S / R under ACTIVE (under R1–R6)
         const int subY = y + 30;
         const int subX = columnX[COL_ACTIVE] - 6;
 
@@ -595,7 +595,7 @@ void Euclidean_seqAudioProcessorEditor::resized()
         row.soloButton.setBounds(subX + 22, subY, 20, 20);
         row.resetButton.setBounds(subX + 44, subY, 20, 20);
 
-        // Bass Settings Button (only for R6) - ANCORATO a M/S/R
+        // Bass Settings Button (only for R6) - ANCHORED TO M/S/R
         if (r == 5)
         {
             const int msrHeight = 20;
@@ -611,18 +611,18 @@ void Euclidean_seqAudioProcessorEditor::resized()
         row.noteSourceButton.setBounds(columnX[COL_NOTE], y, knobSize, knobSize);
 
         // Rotary knobs + value boxes
-        // Distanziamo i rotary knobs dai box sottostanti
-        const int knobSpacing = 10;  // Aggiungiamo un piccolo spazio tra knob e box valore
+        // We distance the rotary knobs from the boxes below
+        const int knobSpacing = 10;  // Let's add a little space between the knob and the value box
         row.stepsKnob.setBounds(columnX[COL_STEPS], y, knobSize, knobSize);
         row.pulsesKnob.setBounds(columnX[COL_PULSES], y, knobSize, knobSize);
         row.swingKnob.setBounds(columnX[COL_SWING], y, knobSize, knobSize);
         row.microKnob.setBounds(columnX[COL_MICRO], y, knobSize, knobSize);
         row.velocityKnob.setBounds(columnX[COL_VELOCITY], y, knobSize, knobSize);
         row.noteLenKnob.setBounds(
-            columnX[COL_NOTELEN],          // Assicurati che columnX sia trattato come un int
-            y,                             // Cast esplicito per la somma
-            knobSize,                      // Cast esplicito per knobSize
-            knobSize                       // Cast esplicito per knobSize
+            columnX[COL_NOTELEN],          // Make sure columnX is treated as an int
+            y,                             // Cast explicit for the sum
+            knobSize,                      // Cast explicit for the knobSize
+            knobSize                       // Cast explicit for the knobSize
         );
 
         // Arp On
@@ -653,10 +653,10 @@ void Euclidean_seqAudioProcessorEditor::timerCallback()
     {
         auto& box = rhythmRows[r].midiPortBox;
 
-        // Salva selezione corrente (ComboBox ID)
+        // Save current selection (ComboBox ID)
         int currentId = box.getSelectedId();
 
-        // Ricostruisci lista
+        // Rebuild list
         box.clear();
         for (int i = 0; i < midiDevices.size(); ++i)
             box.addItem(midiDevices[i].name, i + 1);
@@ -664,7 +664,7 @@ void Euclidean_seqAudioProcessorEditor::timerCallback()
         if (midiDevices.isEmpty())
             box.addItem("No MIDI Outputs", 1);
 
-        // Ripristina selezione se ancora valida
+        // Reset selection if still valid
         int deviceIndex = currentId - 1; // ID → index
         if (deviceIndex >= 0 && deviceIndex < midiDevices.size())
             box.setSelectedId(deviceIndex + 1, juce::dontSendNotification);
@@ -672,11 +672,12 @@ void Euclidean_seqAudioProcessorEditor::timerCallback()
             box.setSelectedId(0, juce::dontSendNotification);
     }
 
-    updateArpGui(); // chiama la funzione che legge le arpNotes
+    updateArpGui(); // call the function that reads the arpNotes
 
     // ===== GUI REFRESH =====
     repaint();
 }
+
 
 
 
