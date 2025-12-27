@@ -50,8 +50,8 @@ public:
         auto& arp = rhythmArps[rhythmIndex];
         auto& slots = arpNoteSlots[rhythmIndex];
 
-        // ===== ARP DISATTIVATO =====
-        if (!arpEnabled[rhythmIndex]) // questo flag DEVE esistere (già hai arpActive)
+        // ===== ARP deactivated =====
+        if (!arpEnabled[rhythmIndex]) // This flag MUST exist (you already have arpActive)
         {
             // ===== REGISTER NOTE AS ARP INPUT =====
             if (baseNote < 64)
@@ -62,7 +62,7 @@ public:
             return true;
         }
 
-        // ===== VERIFICA SE BASE NOTE È SELEZIONATA =====
+        // ===== CHECK IF BASE NOTE IS SELECTED =====
         bool isSelected = false;
         int selectedCount = 0;
 
@@ -77,14 +77,14 @@ public:
             }
         }
 
-        // Nessuna nota selezionata → passa tutto invariato
+        // No notes selected → everything passes unchanged
         if (selectedCount == 0 || !isSelected)
         {
             outMidiNote = baseNote;
             return true;
         }
 
-        // ===== ARP ATTIVO SOLO SU NOTE SELEZIONATE =====
+        // ===== ARP ACTIVE ONLY ON SELECTED NOTES =====
         int step = arp.nextStep() % selectedCount;
         int idx = 0;
 
@@ -102,7 +102,7 @@ public:
             }
         }
 
-        // fallback (non dovrebbe mai accadere)
+        // fallback (should never happen)
         outMidiNote = baseNote;
         return true;
     }
@@ -140,7 +140,7 @@ public:
     std::vector<int> getScaleNotes(int scaleID) const;
     std::vector<int> getChordNotes(int chordID) const;
 
-    // ===== AGGIUNTA: aggiorna note ARP =====
+    // ===== AGGIUNTA: updates note ARP =====
     void updateArpNotes(int scaleID, int chordID);
 
     // ===== SET ARP NOTES FROM PROCESSOR (THREAD-SAFE) =====
@@ -161,6 +161,7 @@ public:
         }
     }
 };
+
 
 
 
