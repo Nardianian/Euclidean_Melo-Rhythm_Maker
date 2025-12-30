@@ -4,7 +4,7 @@
 #include "MidiGenerator.h"
 #include "Arp.h"
 
-// Finestra popup per le impostazioni Global Clock
+// Popup window for Global Clock settings
 class ClockSettingsDialog : public juce::Component
 {
 public:
@@ -144,13 +144,13 @@ public:
 
     void paint(juce::Graphics&) override;
     void resized() override;
-    void openClockSettingsPopup();  // oppure spostare in private 
+    void openClockSettingsPopup();  // or move to private
     void updateArpGui();
 
 private:
     Euclidean_seqAudioProcessor& audioProcessor;
 
-    juce::TextButton randomizeButton{ "Randomize" };    // oppure eliminare le graffe con il contenuto
+    juce::TextButton randomizeButton{ "Randomize" };    // or remove the staples with the content
     juce::TextButton clockSettingsButton{ "Clock Settings" };
 
     // ===== GLOBAL PLAY =====
@@ -164,7 +164,7 @@ private:
     std::unique_ptr<juce::CallOutBox> clockPopup;
     juce::TooltipWindow tooltipWindow;
 
-    // Array di controlli per ogni rhythm row
+    // Array of controls for each rhythm row
     struct RhythmRowControls
     {
         juce::ToggleButton activeButton;
@@ -232,15 +232,17 @@ private:
     juce::Slider clockBpmSlider;
     juce::ComboBox clockBpmBox;
 
+    juce::Label versionLabel;
+
     void timerCallback() override;
+
+    // ===== GUI SCALING =====
+    static constexpr int baseWidth = 1350;
+    static constexpr int baseHeight = 765;
+
+    float guiScale = 1.0f;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Euclidean_seqAudioProcessorEditor)
 };
-
-
-
-
-
-
 
 
