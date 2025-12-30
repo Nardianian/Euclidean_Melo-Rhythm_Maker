@@ -1,4 +1,3 @@
-
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="Fnv0PW" name="Euclidean Melo-Rhythm Maker" projectType="audioplug"
@@ -10,7 +9,7 @@
               headerPath="C:/SDKs/asiosdk/common&#10;&quot;C:/Program Files/JACK2/include&quot;&#10;C:/Users/capoc/Repos/rhythm-generator/Source/MIDI&#10;C:/Users/capoc/Repos/rhythm-generator/Source/utils"
               lv2Uri="https://github.com/Nardianian/Euclid_Seq" aaxIdentifier="com.Nardianian.rhythm-generator"
               bundleIdentifier="com.Nardianian.rhythm-generator" companyWebsite="https://github.com/Nardianian"
-              companyName="Nardianian &amp; Andreas Sandersen" version="0.36"
+              companyName="Nardianian &amp; Andreas Sandersen" version="0.43"
               userNotes="The initial code is by Andreas Sandersen, a Web &amp; Software Programmer from Oslo,  &#10;https://github.com/sandy999999/rhythm-generator &#10;Other links: http://sanandreas.no/ and https://github.com/sandy999999 - Copyright SanAndreas&#169;2025. ">
   <MAINGROUP id="U4m7Pi" name="Euclidean Melo-Rhythm Maker">
     <GROUP id="{41DA7DA6-D79A-C483-6EC8-0CFAD28A92D8}" name="Source">
