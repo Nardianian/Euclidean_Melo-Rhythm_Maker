@@ -1,5 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "ArpNotesComponent.h"
 
 namespace
 {
@@ -123,7 +124,7 @@ Euclidean_seqAudioProcessorEditor::Euclidean_seqAudioProcessorEditor(Euclidean_s
                 {
                     auto* comp = new BassSettingsComponent(audioProcessor.parameters);
 
-                    // >>> MANDATORY DIMENSIONS <<<
+                    // >>> DIMENSIONI OBBLIGATORIE <<<
                     comp->setSize(320, 260);
 
                     bassPopup.reset(new juce::CallOutBox(
@@ -164,6 +165,8 @@ Euclidean_seqAudioProcessorEditor::Euclidean_seqAudioProcessorEditor(Euclidean_s
                 juce::PopupMenu singleMenu;
                 static const char* noteNames[] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
 
+                const auto& src = audioProcessor.noteSources[i];
+
                 int id = 100;
                 for (int octave = 0; octave <= 8; ++octave)
                 {
@@ -172,27 +175,44 @@ Euclidean_seqAudioProcessorEditor::Euclidean_seqAudioProcessorEditor(Euclidean_s
                         int midiNote = octave * 12 + n;
                         if (midiNote > 127) continue;
 
+                        bool selected =
+                            (src.type == Euclidean_seqAudioProcessor::NoteSourceType::Single &&
+                                src.value == midiNote);
+
                         singleMenu.addItem(
                             id++,
-                            juce::String(noteNames[n]) + juce::String(octave));
+                            juce::String(noteNames[n]) + juce::String(octave),
+                            true,
+                            selected);
                     }
                 }
 
                 juce::PopupMenu scaleMenu;
-                scaleMenu.addItem(200, "Major");
-                scaleMenu.addItem(201, "Minor");
-                scaleMenu.addItem(202, "Dorian");
-                scaleMenu.addItem(203, "Phrygian");
-                scaleMenu.addItem(204, "Lydian");
-                scaleMenu.addItem(205, "Mixolydian");
+                const char* scaleNames[] = { "Major", "Minor", "Dorian", "Phrygian", "Lydian", "Mixolydian" };
+
+                for (int s = 0; s < 6; ++s)
+                {
+                    bool selected =
+                        (src.type == Euclidean_seqAudioProcessor::NoteSourceType::Scale &&
+                            src.value == s);
+
+                    scaleMenu.addItem(200 + s, scaleNames[s], true, selected);
+                }
 
                 juce::PopupMenu chordMenu;
-                chordMenu.addItem(300, "Major");
-                chordMenu.addItem(301, "Minor");
-                chordMenu.addItem(302, "Diminished");
-                chordMenu.addItem(303, "Augmented");
-                chordMenu.addItem(304, "Major 7");
-                chordMenu.addItem(305, "Minor 7");
+                const char* chordNames[] =
+                {
+                    "Major", "Minor", "Diminished", "Augmented", "Major 7", "Minor 7"
+                };
+
+                for (int c = 0; c < 6; ++c)
+                {
+                    bool selected =
+                        (src.type == Euclidean_seqAudioProcessor::NoteSourceType::Chord &&
+                            src.value == c);
+
+                    chordMenu.addItem(300 + c, chordNames[c], true, selected);
+                }
 
                 menu.addSubMenu("Single Note", singleMenu);
                 menu.addSubMenu("Scale", scaleMenu);
@@ -201,33 +221,66 @@ Euclidean_seqAudioProcessorEditor::Euclidean_seqAudioProcessorEditor(Euclidean_s
                 menu.showMenuAsync(juce::PopupMenu::Options(),
                     [this, i](int result)
                     {
-                        if (result <= 0) return;
+                        if (result <= 0)
+                            return;
 
                         auto& src = audioProcessor.noteSources[i];
+                        auto& button = rhythmRows[i].noteSourceButton;
+
+                        static const char* noteNames[] =
+                        { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+
+                        static const char* scaleNames[] =
+                        { "Major", "Minor", "Dorian", "Phrygian", "Lydian", "Mixolydian" };
+
+                        static const char* chordNames[] =
+                        { "Major", "Minor", "Diminished", "Augmented", "Major 7", "Minor 7" };
 
                         // ===== SINGLE NOTE =====
                         if (result >= 100 && result < 200)
                         {
+                            int midiNote = result - 100;
                             src.type = Euclidean_seqAudioProcessor::NoteSourceType::Single;
-                            src.value = result - 100;
-                            rhythmRows[i].noteSourceButton.setButtonText("Note");
-                            audioProcessor.updateRowInputNotes(i);
+                            src.value = midiNote;
+
+                            int octave = midiNote / 12;
+                            int note = midiNote % 12;
+
+                            button.setButtonText(
+                                juce::String(noteNames[note]) + juce::String(octave));
+
+                            arpNotesPopup.reset(); // chiude eventuale popup ARP Notes aperto
+                            // === THREAD-SAFE ARP UPDATE ===
+                            audioProcessor.midiGen.setArpNotes(i, { midiNote });
+                            updateArpGui();
                         }
                         // ===== SCALE =====
                         else if (result >= 200 && result < 300)
                         {
+                            int scaleId = result - 200;
                             src.type = Euclidean_seqAudioProcessor::NoteSourceType::Scale;
-                            src.value = result - 200;
-                            rhythmRows[i].noteSourceButton.setButtonText("Scale");
-                            audioProcessor.updateRowInputNotes(i);
+                            src.value = scaleId;
+
+                            button.setButtonText("Scale: " + juce::String(scaleNames[scaleId]));
+
+                            auto scaleNotes = audioProcessor.midiGen.getScaleNotes(scaleId);
+                            arpNotesPopup.reset(); // chiude eventuale popup ARP Notes aperto
+                            audioProcessor.midiGen.setArpNotes(i, scaleNotes);
+                            updateArpGui();
                         }
                         // ===== CHORD =====
                         else if (result >= 300)
                         {
+                            int chordId = result - 300;
                             src.type = Euclidean_seqAudioProcessor::NoteSourceType::Chord;
-                            src.value = result - 300;
-                            rhythmRows[i].noteSourceButton.setButtonText("Chord");
-                            audioProcessor.updateRowInputNotes(i);
+                            src.value = chordId;
+
+                            button.setButtonText("Chord: " + juce::String(chordNames[chordId]));
+
+                            auto chordNotes = audioProcessor.midiGen.getChordNotes(chordId);
+                            arpNotesPopup.reset(); // chiude eventuale popup ARP Notes aperto
+                            audioProcessor.midiGen.setArpNotes(i, chordNotes);
+                            updateArpGui();
                         }
                     });
             };
@@ -246,74 +299,29 @@ Euclidean_seqAudioProcessorEditor::Euclidean_seqAudioProcessorEditor(Euclidean_s
         row.arpNotesButton.setButtonText("Notes");
         row.arpNotesButton.onClick = [this, i]()
             {
-                auto& arpSlots = audioProcessor.midiGen.arpNotes[i]; // <- unique definition
-
                 auto inputNotes = audioProcessor.midiGen.getArpInputNotes(i);
+                auto selectedNotes = audioProcessor.midiGen.getArpNotes(i);
 
-                juce::PopupMenu menu;
-
-                // Show full popup 0–127
-                for (int note = 0; note <= 127; ++note)
-                {
-                    bool selected = false;
-                    for (size_t s = 0; s < arpSlots.size(); ++s)
-                        if (arpSlots[s] == note)
-                            selected = true;
-
-                    menu.addItem(1 + note,
-                        juce::MidiMessage::getMidiNoteName(note, true, true, 3),
-                        true,
-                        selected);
-                }
-
-                // Shows received notes
                 if (inputNotes.empty())
-                {
-                    menu.addItem(1, "No notes received yet", false);
-                }
-                else
-                {
-                    for (int midiNote : inputNotes)
+                    return;
+
+                auto* comp = new ArpNotesComponent(
+                    i,
+                    inputNotes,
+                    selectedNotes,
+                    [this, i](std::vector<int> newNotes)
                     {
-                        bool selected = false;
-                        for (size_t s = 0; s < arpSlots.size(); ++s)
-                            if (arpSlots[s] == midiNote)
-                                selected = true;
-
-                        menu.addItem(1 + midiNote,
-                            juce::MidiMessage::getMidiNoteName(midiNote, true, true, 3),
-                            true,
-                            selected);
-                    }
-                }
-
-                menu.showMenuAsync(juce::PopupMenu::Options(),
-                    [this, &arpSlots](int result)
-                    {
-                        if (result <= 0) return;
-
-                        int midiNote = result - 1;
-
-                        // Toggle
-                        for (size_t s = 0; s < arpSlots.size(); ++s)
-                        {
-                            if (arpSlots[s] == midiNote)
-                            {
-                                arpSlots[s] = -1;
-                                return;
-                            }
-                        }
-
-                        // Add if free slot
-                        for (size_t s = 0; s < arpSlots.size(); ++s)
-                        {
-                            if (arpSlots[s] < 0)
-                            {
-                                arpSlots[s] = midiNote;
-                                return;
-                            }
-                        }
+                        audioProcessor.midiGen.setArpNotes(i, newNotes);
+                        updateArpGui();
                     });
+
+                arpNotesPopup.reset(new juce::CallOutBox(
+                    *comp,
+                    rhythmRows[i].arpNotesButton.getScreenBounds(),
+                    nullptr));
+
+                arpNotesPopup->setAlwaysOnTop(true);
+                arpNotesPopup->enterModalState(true);
             };
 
         addAndMakeVisible(row.arpMode);
@@ -570,11 +578,3 @@ void Euclidean_seqAudioProcessorEditor::timerCallback()
     updateArpGui();
     repaint();
 }
-
-
-
-
-
-
-
-
