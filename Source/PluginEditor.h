@@ -1,29 +1,43 @@
 #pragma once
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
-#include "MidiGenerator.h"
 #include "Arp.h"
 
-// Settings pop-up window Global Clock
+// Popup window for Global Clock settings
 class ClockSettingsDialog : public juce::Component
 {
 public:
-    ClockSettingsDialog(std::function<void(int)> onChangeCallback)
+    ClockSettingsDialog(std::function<void(int)> onChangeCallback,
+        bool isStandalone,
+        int clockSourceValue)
         : onChange(onChangeCallback)
     {
         addAndMakeVisible(clockSourceBox);
-#if JUCE_STANDALONE
-        // ===== STANDALONE =====
-        clockSourceBox.addItem("Internal Clock", 1);
-        clockSourceBox.addItem("External Clock", 2);
-        clockSourceBox.setSelectedId(1);
-#else
-        // ===== PLUGIN =====
-        clockSourceBox.addItem("DAW Clock", 1);
-        clockSourceBox.addItem("Internal Clock", 2);
-        clockSourceBox.addItem("External Clock", 3);
-        clockSourceBox.setSelectedId(1);
-#endif
+
+        if (!isStandalone)
+        {
+            clockSourceBox.addItem("DAW Clock", 1);
+            clockSourceBox.addItem("Internal Clock", 2);
+            clockSourceBox.addItem("External Clock", 3);
+
+            clockSourceBox.setSelectedId(clockSourceValue + 1,
+                juce::dontSendNotification);
+        }
+        else
+        {
+            // Standalone: NO DAW CLOCK
+            clockSourceBox.addItem("Internal Clock", 1);
+            clockSourceBox.addItem("External Clock", 2);
+
+            // Riallineamento enum -> ComboBox
+            // Internal = 1, External = 2
+            if (clockSourceValue == 1)      // Internal
+                clockSourceBox.setSelectedId(1, juce::dontSendNotification);
+            else if (clockSourceValue == 2) // External
+                clockSourceBox.setSelectedId(2, juce::dontSendNotification);
+            else
+                clockSourceBox.setSelectedId(1, juce::dontSendNotification);
+        }
 
         clockSourceBox.onChange = [this]()
             {
@@ -136,18 +150,24 @@ private:
 
 class Euclidean_seqAudioProcessorEditor :
     public juce::AudioProcessorEditor,
-    private juce::Timer
+    private juce::Timer,
+    private juce::AudioProcessorValueTreeState::Listener
 {
 public:
     Euclidean_seqAudioProcessorEditor(Euclidean_seqAudioProcessor&);
     ~Euclidean_seqAudioProcessorEditor() override;
 
+    void updateNoteButton(int row); // Updates the text of the Notes button of the selected row
+    void updateArpGui(); // Update the ARP GUI
     void paint(juce::Graphics&) override;
     void resized() override;
     void openClockSettingsPopup();  // oppure spostare in private 
-    void updateArpGui();
-    // Stato GUI delle note selezionate in ARP Notes per ogni riga
-    std::array<std::vector<juce::ToggleButton*>, 6> arpNoteButtons;
+
+    // Helper editor function for reading ARP notes in a thread-safe manner
+    std::vector<int> getArpNotesSafe(int row) const
+    {
+        return audioProcessor.getArpNotesThreadSafe(row);
+    }
 
 private:
     Euclidean_seqAudioProcessor& audioProcessor;
@@ -240,6 +260,8 @@ private:
     juce::Label versionLabel;
 
     void timerCallback() override;
+    void updateMidiOutputs();
+    void parameterChanged(const juce::String& parameterID, float newValue) override;
 
     // ===== GUI SCALING =====
     static constexpr int baseWidth = 1350;
@@ -249,5 +271,4 @@ private:
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Euclidean_seqAudioProcessorEditor)
 };
-
 
