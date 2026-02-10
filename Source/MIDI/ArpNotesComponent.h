@@ -13,7 +13,7 @@ public:
         std::function<void(std::vector<int>)> onChange)
         : row(rowIndex), callback(onChange)
     {
-        selected = selectedNotes; // riallineamento iniziale reale
+        selected = selectedNotes; // real initial realignment
 
         setInterceptsMouseClicks(true, true);
         setWantsKeyboardFocus(true);
@@ -25,7 +25,7 @@ public:
             auto* tb = toggles.add(new juce::ToggleButton(
                 juce::MidiMessage::getMidiNoteName(midiNote, true, true, 3)));
 
-            // Verifichiamo se il valore MIDI esatto è nella lista dei selezionati
+            // Check if the exact MIDI value is in the list of selected ones
             const bool isSelected = std::find(selected.begin(), selected.end(), midiNote) != selected.end();
 
             tb->setToggleState(isSelected, juce::dontSendNotification);
@@ -34,8 +34,7 @@ public:
                 {
                     const bool isOn = tb->getToggleState();
 
-                    // Rimuoviamo ogni traccia della nota prima di decidere se aggiungerla
-                    // Questo pulisce eventuali duplicati invisibili
+                    // Removes all traces of the note before deciding whether to add it, to clean up any invisible duplicates
                     selected.erase(std::remove(selected.begin(), selected.end(), midiNote), selected.end());
 
                     if (isOn)
@@ -46,14 +45,14 @@ public:
                         }
                         else
                         {
-                            // Se abbiamo già 4 note, non permettere l'accensione
+                            // If there are already 4 notes, do not allow ignition
                             tb->setToggleState(false, juce::dontSendNotification);
                         }
                     }
 
                     if (callback)
                     {
-                        // Creiamo una copia locale per evitare race conditions
+                        // Create a local copy to avoid race conditions
                         std::vector<int> notesCopy = selected;
                         callback(notesCopy);
                     }
@@ -63,11 +62,11 @@ public:
             tb->setBounds(10, y, 140, 24);
             y += 26;
         }
-        // Se ci sono troppe note (es. scale), limitiamo l'altezza per evitare che il popup "scappi"
+        // If there are too many notes (e.g. scales), we limit the pitch to prevent the popup from "running away"
         int totalHeight = juce::jmin(y + 10, 400);
         setSize(160, totalHeight);
     }
-    // Callback pubblica visibile da PluginEditor
+    // Public callback visible from PluginEditor
     std::function<void(std::vector<int>)> callback;
 
 private:
@@ -75,3 +74,4 @@ private:
     juce::OwnedArray<juce::ToggleButton> toggles;
     std::vector<int> selected;
 };
+
