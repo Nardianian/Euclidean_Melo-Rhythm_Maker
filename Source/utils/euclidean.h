@@ -24,6 +24,22 @@ public:
     }
 
     void reset() { currentStep = 0; }
+    int getCurrentStep() const noexcept
+    {
+        return currentStep;
+    }
+
+    bool isStepOn(int step) const noexcept
+    {
+        if (pattern.empty())
+            return false;
+
+        step %= static_cast<int>(pattern.size());
+        if (step < 0)
+            step += static_cast<int>(pattern.size());
+
+        return pattern[step];
+    }
 
     const std::vector<bool>& getPattern() const { return pattern; }
 
