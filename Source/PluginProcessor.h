@@ -1,11 +1,11 @@
 #pragma once 
 #include <JuceHeader.h>
 #include "MidiGenerator.h"
-#include "ClockManager.h"
-// Per thread-safety nell'ARP
+#include "ClockManager.h" // For thread-safety in ARP
 #include <mutex>
 #include <atomic>
 #include <vector>
+#include <array>
 
 struct MidiPortEvent
 {
@@ -22,9 +22,14 @@ public:
     ~Euclidean_seqAudioProcessor() override;
 
     //==============================================================================
+    // Class members
+    double samplesPerArpStep = 0.0;
+    bool arpStepAdvanced = false;
+    bool arpActive = false;
 
     void prepareToPlay(double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
+    void updateClockSource();
     void processBlock(juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
 
     juce::AudioProcessorEditor* createEditor() override;
@@ -48,6 +53,9 @@ public:
     juce::AudioProcessorValueTreeState parameters;
     MidiGenerator midiGen;
 
+    // Mutex to protect access to ARP notes in MidiGenerator
+    std::array<std::mutex, 6> arpNotesMutex;
+
     ClockManager clock;
 
     // ================== NOTE SOURCE TYPES ==================
@@ -61,22 +69,48 @@ public:
     struct NoteSource
     {
         NoteSourceType type = NoteSourceType::Single;
-        int value = 60; // default C4 per Single, o ID di Scale/Chord
+        int value = 60;    // nota singola oppure ID scala/accordo
+        int octave = 4;   // MIDI OCTAVE (1–7), used only for Scale/Chord
     };
 
     NoteSource noteSources[6];
-
-    // ===== Thread-safe / GUI state for selected notes in the ARP =====
-    std::array<std::vector<bool>, 6> arpNoteSelected; // ogni riga: 128 elementi
 
     const juce::Array<juce::MidiDeviceInfo>& getAvailableMidiOutputs() const
     {
         return availableMidiOutputs;
     }
+    bool isArpActive(int rhythmIndex) const
+    {
+        return parameters.getRawParameterValue("rhythm" + juce::String(rhythmIndex) + "_arpActive")->load() > 0.5f;
+    }
+
+    double getArpRate(int rhythmIndex) const
+    {
+        static const double arpRateTable[] = { 1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0.1666667, 0.375 };
+        int rateIndex = (int)parameters.getRawParameterValue("rhythm" + juce::String(rhythmIndex) + "_arpRate")->load();
+        return arpRateTable[juce::jlimit(0, 7, rateIndex)];
+    }
 
     void refreshMidiOutputs();
     void updateMidiOutputForRhythm(int rhythmIndex, int deviceIndex);
+    void changeMidiOutput(int row, const juce::String& deviceName);
     bool isRowActive(int row) const;
+    // ===== ARP SELECTION FROM GUI =====
+    void setArpSelectionFromGUI(int row, const std::vector<bool>& selection);
+
+    // Funzione thread-safe per leggere le note ARP di un ritmo
+    std::vector<int> getArpNotesThreadSafe(int row)
+    {
+        if (row < 0 || row >= 6)
+            return {};
+
+        std::vector<int> notesCopy;
+        {
+            std::lock_guard<std::mutex> lock(arpNotesMutex[row]);
+            notesCopy = midiGen.getNotesForRow(row); // thread-safe copy
+        }
+        return notesCopy;
+    }
 
 private:
     juce::Array<juce::MidiDeviceInfo> availableMidiOutputs;
@@ -88,7 +122,7 @@ private:
         std::unique_ptr<juce::MidiOutput> output;
     };
     std::array<RhythmMidiOut, 6> rhythmMidiOuts;
-
+    // Array of active MIDI output pointers for each rhythm (MIDI port management)
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     std::vector<MidiPortEvent> stagedMidiEvents;
 
@@ -104,8 +138,8 @@ private:
     float bassGlideCurve = 0.6f;
     int bassPitchBendRange = 12;
 
-    enum class ClockSource { DAW = 0, Internal, External };
-    ClockSource clockSource = ClockSource::Internal;
+    // Use the global enum defined in ClockManager.h to avoid duplicate types
+    ::ClockSource clockSource = ::ClockSource::Internal;
     bool externalClockRunning = false;
     bool isMuted = false;
 
@@ -121,9 +155,10 @@ private:
 
     struct PendingNoteOff
     {
-        int channel = 1;
         int note = 0;
-        int remainingSamples = 0;
+        int channel = 1;
+        int row = 0;              // Line (0-5) to address the correct MIDI port
+        double remainingSamples = 0.0; // double precision for timing
     };
     std::vector<PendingNoteOff> pendingNoteOffs;
 
@@ -131,6 +166,7 @@ private:
     int64_t globalStepCounter = 0;
     bool isPlaying = false;
     std::atomic<bool> globalPlayState{ false };
+    std::array<double, 6> extClockSampleAccum{};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Euclidean_seqAudioProcessor)
 };
