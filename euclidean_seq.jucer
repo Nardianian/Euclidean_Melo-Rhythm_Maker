@@ -1,21 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<JUCERPROJECT id="Fnv0PW" name="Euclidean Melo-Rhythm Maker" projectType="audioplug"
+<JUCERPROJECT id="Fnv0PW" name="Euclidean_Melo-Rhythm_Maker" projectType="audioplug"
               useAppConfig="0" displaySplashScreen="1" jucerFormatVersion="1"
-              pluginCharacteristicsValue="pluginProducesMidiOut,pluginWantsMidiIn"
+              pluginCharacteristicsValue="pluginIsMidiEffectPlugin,pluginProducesMidiOut,pluginWantsMidiIn"
               pluginName="Euclidean MIDI Generator" pluginFormats="buildAAX,buildLV2,buildStandalone,buildVST,buildVST3"
-              pluginVST3Category="Instrument,Synth" pluginAAXCategory="0" pluginVSTCategory="kPlugCategSynth"
-              defines="JUCE_VST3_CAN_REPLACE_VST2=0&#10;JUCE_USE_WINRT_MIDI=1&#10;JUCE_FORCE_WINRT_MIDI=1&#10;"
-              headerPath="C:/SDKs/asiosdk/common&#10;&quot;C:/Program Files/JACK2/include&quot;&#10;C:/Users/capoc/Repos/rhythm-generator/Source/MIDI&#10;C:/Users/capoc/Repos/rhythm-generator/Source/utils"
+              pluginVST3Category="Fx,Generator,Instrument,Synth,Tools" pluginAAXCategory="2048,65536,8192"
+              pluginVSTCategory="kPlugCategSynth" defines="JUCE_VST3_CAN_REPLACE_VST2=0&#10;JUCE_USE_WINRT_MIDI=1&#10;JUCE_FORCE_WINRT_MIDI=1&#10;"
+              headerPath="C:/SDKs/asiosdk/common&#10;C:/Program Files/JACK2/include&#10;C:/Users/capoc/Repos/Euclidean_Melo-Rhythm_Maker/Source/MIDI&#10;C:/Users/capoc/Repos/Euclidean_Melo-Rhythm_Maker/Source/utils&#10;C:/Users/capoc/Repos/Euclidean_Melo-Rhythm_Maker/Source/"
               lv2Uri="https://github.com/Nardianian/Euclid_Seq" aaxIdentifier="com.Nardianian.rhythm-generator"
               bundleIdentifier="com.Nardianian.rhythm-generator" companyWebsite="https://github.com/Nardianian"
-              companyName="Nardianian &amp; Andreas Sandersen" version="0.43"
+              companyName="Nardianian &amp; Andreas Sandersen" version="0.56"
               userNotes="The initial code is by Andreas Sandersen, a Web &amp; Software Programmer from Oslo,  &#10;https://github.com/sandy999999/rhythm-generator &#10;Other links: http://sanandreas.no/ and https://github.com/sandy999999 - Copyright SanAndreas&#169;2025. ">
-  <MAINGROUP id="U4m7Pi" name="Euclidean Melo-Rhythm Maker">
+  <MAINGROUP id="U4m7Pi" name="Euclidean_Melo-Rhythm_Maker">
     <GROUP id="{41DA7DA6-D79A-C483-6EC8-0CFAD28A92D8}" name="Source">
       <GROUP id="{D2F2510C-5A8A-6711-E6C4-96990A9DA133}" name="MIDI">
         <FILE id="xvXsYb" name="Arp.cpp" compile="1" resource="0" file="Source/MIDI/Arp.cpp"/>
         <FILE id="ByQ3ks" name="Arp.h" compile="0" resource="0" file="Source/MIDI/Arp.h"/>
+        <FILE id="GHQckG" name="ArpNotesComponent.h" compile="0" resource="0"
+              file="Source/MIDI/ArpNotesComponent.h"/>
+        <FILE id="F4dtIh" name="ClockManager.cpp" compile="1" resource="0"
+              file="Source/MIDI/ClockManager.cpp"/>
+        <FILE id="Qlbs72" name="ClockManager.h" compile="0" resource="0" file="Source/MIDI/ClockManager.h"/>
         <FILE id="hlximK" name="MidiGenerator.cpp" compile="1" resource="0"
               file="Source/MIDI/MidiGenerator.cpp"/>
         <FILE id="kYMgRH" name="MidiGenerator.h" compile="0" resource="0" file="Source/MIDI/MidiGenerator.h"/>
@@ -33,7 +38,7 @@
     </GROUP>
   </MAINGROUP>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"
-               JUCE_ASIO="1" JUCE_WASAPI="1" JUCE_ALSA="0" JUCE_JACK="1"/>
+               JUCE_ASIO="1" JUCE_WASAPI="1" JUCE_ALSA="0" JUCE_JACK="1" JUCE_USE_WINRT_MIDI="1"/>
   <EXPORTFORMATS>
     <VS2026 targetFolder="Builds/VisualStudio2026">
       <CONFIGURATIONS>
